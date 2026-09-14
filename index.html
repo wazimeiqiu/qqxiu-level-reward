@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#EDE9FE">
+<title>QQ秀 · 等级奖励</title>
+<style>
+  /* ============ 主题变量 ============ */
+  :root {
+    --violet-600: #8B5CF6;
+    --violet-400: #A78BFA;
+    --violet-300: #C4B5FD;
+    --violet-200: #DDD6FE;
+
+    --bg-1: #F6F3FF;
+    --bg-2: #EDE9FE;
+    --bg-3: #E0E7FF;
+
+    --ink-900: #4C1D95;
+    --ink-500: #7C6BA8;
+    --ink-300: #A99BC7;
+    --white: #FFFFFF;
+
+    --coin: #F59E0B;
+    --coin-soft: #FEF3C7;
+    --catch: #10B981;
+    --catch-soft: #D1FAE5;
+    --stage: #EC4899;
+    --stage-soft: #FCE7F3;
+
+    --radius-card: 20px;
+    --radius-cell: 18px;
+    --shadow-soft: 0 6px 24px rgba(124, 92, 200, .10);
+    --shadow-cell: 0 3px 12px rgba(124, 92, 200, .10);
+    --shadow-sheet: 0 -8px 40px rgba(76, 29, 149, .18);
+
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    min-height: 100%;
+    background: var(--bg-2);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue",
+                 "Microsoft YaHei", sans-serif;
+    color: var(--ink-900);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ============ 背景：浅紫梦幻渐变 + 漂浮光晕 ============ */
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(120% 70% at 15% 0%,  #FFFFFF 0%, rgba(255,255,255,0) 55%),
+      radial-gradient(90% 60% at 90% 12%,  #E9E4FF 0%, rgba(233,228,255,0) 60%),
+      linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 48%, var(--bg-3) 100%);
+    overflow: hidden;
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(46px);
+    opacity: .55;
+    will-change: transform;
+  }
+  .orb-1 { width: 240px; height: 240px; top: -70px;  left: -70px;  background: #C7B8FF; animation: float1 13s ease-in-out infinite; }
+  .orb-2 { width: 200px; height: 200px; top: 22%;    right: -80px; background: #B9C6FF; animation: float2 16s ease-in-out infinite; }
+  .orb-3 { width: 180px; height: 180px; bottom: 8%;  left: -60px;  background: #E7C8FF; animation: float3 19s ease-in-out infinite; }
+  .orb-4 { width: 150px; height: 150px; bottom: -50px; right: 12%; background: #CFF0FF; animation: float1 22s ease-in-out infinite reverse; }
+
+  @keyframes float1 {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50%      { transform: translate3d(18px, 26px, 0) scale(1.08); }
+  }
+  @keyframes float2 {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50%      { transform: translate3d(-22px, 20px, 0) scale(1.12); }
+  }
+  @keyframes float3 {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50%      { transform: translate3d(20px, -24px, 0) scale(.92); }
+  }
+
+  /* 漂浮小星星装饰 */
+  .sparkle {
+    position: absolute;
+    font-size: 15px;
+    opacity: .5;
+    animation: twinkle 4.5s ease-in-out infinite;
+    will-change: transform, opacity;
+  }
+  .sp1 { top: 14%;  left: 12%;  animation-delay: 0s;   }
+  .sp2 { top: 9%;   right: 22%; animation-delay: .8s;  font-size: 12px; }
+  .sp3 { top: 46%;  left: 6%;   animation-delay: 1.6s; font-size: 13px; }
+  .sp4 { bottom: 22%; right: 9%;animation-delay: 2.4s; }
+  .sp5 { top: 62%;  right: 5%;  animation-delay: 3.1s; font-size: 11px; }
+
+  @keyframes twinkle {
+    0%, 100% { transform: translateY(0) scale(1) rotate(0deg);      opacity: .25; }
+    50%      { transform: translateY(-12px) scale(1.25) rotate(18deg); opacity: .7; }
+  }
+
+  /* ============ 页面容器 ============ */
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: calc(var(--safe-top) + 22px) 18px calc(var(--safe-bottom) + 26px);
+  }
+
+  /* ============ 标题区 ============ */
+  .hero {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+    animation: rise .6s cubic-bezier(.22,.9,.3,1) both;
+  }
+
+  .avatar {
+    position: relative;
+    flex: 0 0 auto;
+    width: 74px; height: 74px;
+    border-radius: 26px;
+    display: grid;
+    place-items: center;
+    font-size: 40px;
+    background: linear-gradient(150deg, #FFFFFF 0%, #F1EBFF 100%);
+    box-shadow: 0 8px 22px rgba(139, 92, 246, .22), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .avatar::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 32px;
+    background: radial-gradient(circle, rgba(167,139,250,.35) 0%, rgba(167,139,250,0) 70%);
+    z-index: -1;
+  }
+  .avatar .halo {
+    position: absolute;
+    inset: 0;
+    border-radius: 26px;
+    background: conic-gradient(from 0deg, rgba(139,92,246,.5), rgba(236,72,153,.35), rgba(245,158,11,.35), rgba(139,92,246,.5));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    padding: 1.6px;
+    opacity: .55;
+    animation: spin 7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .avatar-badge {
+    position: absolute;
+    right: -5px; bottom: -5px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--violet-600), var(--violet-400));
+    box-shadow: 0 3px 10px rgba(139,92,246,.45);
+    letter-spacing: .3px;
+  }
+
+  .hero-card {
+    flex: 1 1 auto;
+    padding: 13px 15px;
+    border-radius: 20px;
+    background: rgba(255,255,255,.62);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid rgba(255,255,255,.85);
+    box-shadow: var(--shadow-soft);
+  }
+  .hero-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    background: linear-gradient(100deg, var(--violet-600) 0%, #6D5AE6 45%, var(--stage) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    margin-top: 4px;
+    font-size: 12.5px;
+    font-weight: 400;
+    color: var(--ink-500);
+    line-height: 1.5;
+  }
+  .hero-sub b {
+    color: var(--violet-600);
+    font-weight: 600;
+  }
+
+  /* ============ 图例条 ============ */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 14px;
+    animation: rise .6s .06s cubic-bezier(.22,.9,.3,1) both;
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px 5px 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.9);
+    box-shadow: 0 2px 8px rgba(124,92,200,.09);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ink-900);
+  }
+  .legend-dot {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+  }
+  .legend-count { color: var(--ink-300); font-weight: 500; }
+
+  /* ============ 卡片网格 ============ */
+  .board {
+    padding: 15px 13px 13px;
+    border-radius: var(--radius-card);
+    background: rgba(255,255,255,.82);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid rgba(255,255,255,.9);
+    box-shadow: 0 10px 34px rgba(124, 92, 200, .14);
+    animation: rise .6s .12s cubic-bezier(.22,.9,.3,1) both;
+  }
+
+  .board-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 0 3px 11px;
+  }
+  .board-head h2 {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink-900);
+    letter-spacing: .3px;
+  }
+  .board-head span {
+    font-size: 11px;
+    color: var(--ink-300);
+    font-weight: 500;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 9px;
+  }
+
+  .cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 78px;
+    padding: 9px 4px 8px;
+    border: none;
+    border-radius: var(--radius-cell);
+    background: var(--white);
+    box-shadow: var(--shadow-cell);
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--ink-900);
+    transition: transform .16s cubic-bezier(.34,1.56,.64,1), box-shadow .16s ease;
+    overflow: hidden;
+  }
+  .cell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-cell);
+    opacity: .5;
+    background: radial-gradient(90% 60% at 50% 0%, var(--tint-soft) 0%, rgba(255,255,255,0) 70%);
+    pointer-events: none;
+  }
+  .cell:active {
+    transform: scale(.94);
+    box-shadow: 0 1px 5px rgba(124,92,200,.12);
+  }
+  .cell:focus-visible {
+    outline: 2px solid var(--violet-400);
+    outline-offset: 2px;
+  }
+
+  .cell-icon {
+    position: relative;
+    z-index: 1;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    line-height: 1;
+    background: var(--tint-soft);
+    box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.9);
+  }
+
+  .cell-level {
+    position: relative;
+    z-index: 1;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    color: var(--ink-900);
+  }
+
+  .cell-cap {
+    position: absolute;
+    top: 5px; right: 5px;
+    z-index: 2;
+    font-size: 8.5px;
+    font-weight: 700;
+    color: #fff;
+    padding: 1.5px 4px;
+    border-radius: 999px;
+    background: var(--tint);
+    letter-spacing: .2px;
+  }
+
+  /* 卡片入场动画 */
+  .cell {
+    opacity: 0;
+    transform: translateY(10px) scale(.96);
+    animation: pop .42s cubic-bezier(.22,.9,.3,1) forwards;
+    animation-delay: var(--d, 0s);
+  }
+  @keyframes pop {
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============ 底部统计条 ============ */
+  .summary {
+    margin-top: 14px;
+    padding: 11px 14px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.8);
+    font-size: 11.5px;
+    color: var(--ink-500);
+    text-align: center;
+    line-height: 1.7;
+    animation: rise .6s .18s cubic-bezier(.22,.9,.3,1) both;
+  }
+  .summary b { color: var(--violet-600); font-weight: 700; }
+  .summary .sep { color: var(--violet-300); margin: 0 5px; }
+
+  .foot-tip {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 10.5px;
+    color: var(--ink-300);
+    letter-spacing: .2px;
+  }
+
+  /* ============ 详情弹层 ============ */
+  .mask {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(45, 24, 92, .42);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .28s ease, visibility .28s ease;
+  }
+  .mask.show { opacity: 1; visibility: visible; }
+
+  .sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 50;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 10px 22px calc(var(--safe-bottom) + 20px);
+    border-radius: 26px 26px 0 0;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FBFAFF 100%);
+    box-shadow: var(--shadow-sheet);
+    transform: translateY(100%);
+    transition: transform .3s cubic-bezier(.22,.9,.3,1);
+    touch-action: none;
+    text-align: center;
+  }
+  .sheet.show { transform: translateY(0); }
+
+  .sheet-grabber {
+    width: 38px; height: 4px;
+    margin: 0 auto 16px;
+    border-radius: 999px;
+    background: var(--violet-200);
+  }
+
+  .sheet-icon {
+    width: 78px; height: 78px;
+    margin: 0 auto 12px;
+    border-radius: 26px;
+    display: grid;
+    place-items: center;
+    font-size: 40px;
+    background: var(--tint-soft);
+    box-shadow: 0 6px 20px var(--tint-glow), inset 0 0 0 2px rgba(255,255,255,.9);
+    animation: bounceIn .42s cubic-bezier(.22,1.3,.4,1) both;
+  }
+  @keyframes bounceIn {
+    from { opacity: 0; transform: scale(.6); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .sheet-level {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: .5px;
+    color: var(--ink-900);
+    line-height: 1.15;
+  }
+
+  .sheet-tag {
+    display: inline-block;
+    margin-top: 9px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--tint);
+    background: var(--tint-soft);
+    letter-spacing: .3px;
+  }
+
+  .sheet-desc {
+    margin-top: 14px;
+    padding: 13px 14px;
+    border-radius: 14px;
+    background: rgba(237,233,254,.55);
+    border: 1px solid rgba(196,181,253,.4);
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--violet-600);
+    line-height: 1.55;
+  }
+
+  .sheet-tip {
+    margin-top: 11px;
+    font-size: 11.5px;
+    color: var(--ink-300);
+    line-height: 1.6;
+  }
+
+  .sheet-btn {
+    margin-top: 18px;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 16px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+    background: linear-gradient(135deg, var(--violet-600) 0%, #7C6BF2 55%, var(--violet-400) 100%);
+    box-shadow: 0 8px 20px rgba(139,92,246,.32);
+    cursor: pointer;
+    transition: transform .16s cubic-bezier(.34,1.56,.64,1), box-shadow .16s ease;
+  }
+  .sheet-btn:active {
+    transform: scale(.97);
+    box-shadow: 0 4px 12px rgba(139,92,246,.28);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- 背景装饰 -->
+<div class="backdrop" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+  <div class="sparkle sp1">✨</div>
+  <div class="sparkle sp2">⭐</div>
+  <div class="sparkle sp3">💫</div>
+  <div class="sparkle sp4">✨</div>
+  <div class="sparkle sp5">💜</div>
+</div>
+
+<main class="page">
+  <!-- 标题区 -->
+  <header class="hero">
+    <div class="avatar">
+      <span class="halo" aria-hidden="true"></span>
+      <span role="img" aria-label="QQ秀形象">👧</span>
+      <span class="avatar-badge">QQ秀</span>
+    </div>
+    <div class="hero-card">
+      <h1 class="hero-title">等级奖励</h1>
+      <p class="hero-sub">Lv2 - Lv25，每升一级都有惊喜 · <b>点卡片看详情</b></p>
+    </div>
+  </header>
+
+  <!-- 图例条 -->
+  <div class="legend" id="legend"></div>
+
+  <!-- 卡片网格 -->
+  <section class="board">
+    <div class="board-head">
+      <h2>🎁 升级奖励一览</h2>
+      <span id="boardCount"></span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <!-- 底部统计 -->
+  <p class="summary" id="summary"></p>
+  <p class="foot-tip">奖励随版本调优，最终以线上实际发放为准</p>
+</main>
+
+<!-- 详情弹层 -->
+<div class="mask" id="mask"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetLevel">
+  <div class="sheet-grabber"></div>
+  <div class="sheet-icon" id="sheetIcon">🪙</div>
+  <div class="sheet-level" id="sheetLevel">Lv4</div>
+  <div class="sheet-tag" id="sheetTag">秀米加成</div>
+  <div class="sheet-desc" id="sheetDesc">秀米 +8</div>
+  <p class="sheet-tip">升到该等级即可自动获得，无需手动领取</p>
+  <button class="sheet-btn" id="sheetBtn">知道啦</button>
+</div>
+
+<script>
+/* ==================== 奖励类型配置 ==================== */
+/* 新增奖励类型时，只需在此追加一条 */
+const REWARD_TYPES = {
+  coin:  { label: '秀米加成', icon: '🪙', tint: '#F59E0B', soft: '#FEF3C7', glow: 'rgba(245,158,11,.28)' },
+  catch: { label: '抓人次数', icon: '🤝', tint: '#10B981', soft: '#D1FAE5', glow: 'rgba(16,185,129,.26)' },
+  stage: { label: '解锁秀场', icon: '🎪', tint: '#EC4899', soft: '#FCE7F3', glow: 'rgba(236,72,153,.26)' }
+};
+
+/* ==================== 等级奖励数据（Lv2 - Lv25） ==================== */
+/* level 等级 / type 奖励类型 / icon 图标 / title 卡片副标题 / desc 详情文案 / cap 角标（可选） */
+const LEVEL_REWARDS = [
+  { level: 2,  type: 'catch', icon: '🤝', title: '抓人 +1',   desc: '抓人次数 +1' },
+  { level: 3,  type: 'stage', icon: '🎪', title: '主题 01',   desc: '解锁主题秀场 · 主题 01' },
+  { level: 4,  type: 'coin',  icon: '🪙', title: '秀米 +8',   desc: '秀米 +8' },
+  { level: 5,  type: 'stage', icon: '🎣', title: '钓鱼湾',    desc: '解锁主题秀场 · 钓鱼湾' },
+  { level: 6,  type: 'catch', icon: '🤝', title: '抓人 +1',   desc: '抓人次数 +1' },
+  { level: 7,  type: 'stage', icon: '🎪', title: '主题 03',   desc: '解锁主题秀场 · 主题 03' },
+  { level: 8,  type: 'coin',  icon: '🪙', title: '秀米 +11',  desc: '秀米 +11' },
+  { level: 9,  type: 'catch', icon: '🤝', title: '抓人 +1',   desc: '抓人次数 +1' },
+  { level: 10, type: 'stage', icon: '🕺', title: '蹦迪台',    desc: '解锁主题秀场 · 蹦迪台' },
+  { level: 11, type: 'catch', icon: '🤝', title: '抓人 +1',   desc: '抓人次数 +1 · 封顶', cap: '封顶' },
+  { level: 12, type: 'coin',  icon: '🪙', title: '秀米 +14',  desc: '秀米 +14' },
+  { level: 13, type: 'stage', icon: '🎪', title: '主题 05',   desc: '解锁主题秀场 · 主题 05' },
+  { level: 14, type: 'coin',  icon: '🪙', title: '秀米 +15',  desc: '秀米 +15' },
+  { level: 15, type: 'stage', icon: '🧘', title: '修仙阁',    desc: '解锁主题秀场 · 修仙阁' },
+  { level: 16, type: 'coin',  icon: '🪙', title: '秀米 +17',  desc: '秀米 +17' },
+  { level: 17, type: 'stage', icon: '🎪', title: '主题 07',   desc: '解锁主题秀场 · 主题 07' },
+  { level: 18, type: 'coin',  icon: '🪙', title: '秀米 +18',  desc: '秀米 +18' },
+  { level: 19, type: 'coin',  icon: '🪙', title: '秀米 +19',  desc: '秀米 +19' },
+  { level: 20, type: 'stage', icon: '🎸', title: '乐队现场',  desc: '解锁主题秀场 · 乐队现场' },
+  { level: 21, type: 'coin',  icon: '🪙', title: '秀米 +21',  desc: '秀米 +21' },
+  { level: 22, type: 'stage', icon: '🎪', title: '主题 09',   desc: '解锁主题秀场 · 主题 09' },
+  { level: 23, type: 'coin',  icon: '🪙', title: '秀米 +23',  desc: '秀米 +23' },
+  { level: 24, type: 'coin',  icon: '🪙', title: '秀米 +24',  desc: '秀米 +24' },
+  { level: 25, type: 'stage', icon: '🎧', title: '电音节',    desc: '解锁主题秀场 · 电音节' }
+];
+
+/* ==================== 渲染 ==================== */
+const grid   = document.getElementById('grid');
+const legend = document.getElementById('legend');
+const boardCount = document.getElementById('boardCount');
+const summaryEl  = document.getElementById('summary');
+
+/** 统计各类型数量 */
+function countByType() {
+  return LEVEL_REWARDS.reduce((acc, r) => {
+    acc[r.type] = (acc[r.type] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+/** 渲染类型图例 */
+function renderLegend() {
+  const counts = countByType();
+  legend.innerHTML = Object.entries(REWARD_TYPES).map(([key, t]) => `
+    <span class="legend-item">
+      <span class="legend-dot" style="background:${t.soft}">${t.icon}</span>${t.label}
+      <span class="legend-count">${counts[key] || 0}</span>
+    </span>
+  `).join('');
+}
+
+/** 渲染等级卡片网格 */
+function renderGrid() {
+  grid.innerHTML = LEVEL_REWARDS.map((r, i) => {
+    const t = REWARD_TYPES[r.type] || REWARD_TYPES.coin;
+    return `
+      <button class="cell" type="button" data-level="${r.level}"
+              style="--tint:${t.tint}; --tint-soft:${t.soft}; --tint-glow:${t.glow}; --d:${(0.18 + i * 0.022).toFixed(3)}s"
+              aria-label="Lv${r.level} ${r.desc}">
+        ${r.cap ? `<span class="cell-cap">${r.cap}</span>` : ''}
+        <span class="cell-icon" aria-hidden="true">${r.icon}</span>
+        <span class="cell-level">Lv${r.level}</span>
+      </button>
+    `;
+  }).join('');
+}
+
+/** 渲染底部统计 */
+function renderSummary() {
+  const c = countByType();
+  boardCount.textContent = `共 ${LEVEL_REWARDS.length} 级`;
+  summaryEl.innerHTML =
+    `共 <b>${LEVEL_REWARDS.length}</b> 级奖励` +
+    `<span class="sep">·</span>秀米加成 <b>${c.coin || 0}</b> 级` +
+    `<span class="sep">·</span>解锁秀场 <b>${c.stage || 0}</b> 级` +
+    `<span class="sep">·</span>抓人次数 <b>${c.catch || 0}</b> 级`;
+}
+
+/* ==================== 详情弹层 ==================== */
+const mask = document.getElementById('mask');
+const sheet = document.getElementById('sheet');
+const sheetIcon  = document.getElementById('sheetIcon');
+const sheetLevel = document.getElementById('sheetLevel');
+const sheetTag   = document.getElementById('sheetTag');
+const sheetDesc  = document.getElementById('sheetDesc');
+const sheetBtn   = document.getElementById('sheetBtn');
+
+/** 打开详情 */
+function openDetail(level) {
+  const r = LEVEL_REWARDS.find(x => x.level === level);
+  if (!r) return;
+  const t = REWARD_TYPES[r.type] || REWARD_TYPES.coin;
+
+  sheet.style.setProperty('--tint', t.tint);
+  sheet.style.setProperty('--tint-soft', t.soft);
+  sheet.style.setProperty('--tint-glow', t.glow);
+
+  sheetIcon.textContent  = r.icon;
+  sheetIcon.style.animation = 'none';
+  void sheetIcon.offsetWidth;          // 重启动画
+  sheetIcon.style.animation = '';
+
+  sheetLevel.textContent = `Lv${r.level}`;
+  sheetTag.textContent   = t.label;
+  sheetDesc.textContent  = r.desc;
+
+  sheet.classList.add('show');
+  mask.classList.add('show');
+}
+
+/** 关闭详情 */
+function closeDetail() {
+  sheet.classList.remove('show');
+  mask.classList.remove('show');
+}
+
+/* 事件委托：整个网格只绑一个监听 */
+grid.addEventListener('click', e => {
+  const cell = e.target.closest('.cell');
+  if (cell) openDetail(Number(cell.dataset.level));
+});
+
+mask.addEventListener('click', closeDetail);
+sheetBtn.addEventListener('click', closeDetail);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDetail();
+});
+
+/* 下滑手势关闭 */
+let startY = 0, curY = 0, dragging = false;
+sheet.addEventListener('touchstart', e => {
+  startY = curY = e.touches[0].clientY;
+  dragging = true;
+  sheet.style.transition = 'none';
+}, { passive: true });
+
+sheet.addEventListener('touchmove', e => {
+  if (!dragging) return;
+  curY = e.touches[0].clientY;
+  const dy = Math.max(0, curY - startY);
+  sheet.style.transform = `translateY(${dy}px)`;
+}, { passive: true });
+
+sheet.addEventListener('touchend', () => {
+  if (!dragging) return;
+  dragging = false;
+  sheet.style.transition = '';
+  sheet.style.transform = '';
+  if (curY - startY > 90) closeDetail();
+});
+
+/* ==================== 启动 ==================== */
+renderLegend();
+renderGrid();
+renderSummary();
+</script>
+</body>
+</html>
